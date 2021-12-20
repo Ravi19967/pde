@@ -1,0 +1,50 @@
+-- average complete time of a course
+SELECT AVG(EXTRACT(DAY FROM "completedDate"-"startDate")) AS "Average Time in Days"
+FROM certificates AS a
+INNER JOIN courses AS b ON a.course_id = b.course_id;
+
+
+-- average amount of time a user spent in a course
+SELECT b.user_id , b.email, AVG(EXTRACT(DAY FROM "completedDate"-"startDate")) AS "Average Time in Days"
+FROM certificates AS a
+INNER JOIN users AS b ON a.user_id = b.user_id
+GROUP BY b.user_id, b.email;
+
+
+-- average amount of time users spent for each course individually
+SELECT b.course_id , b.title, AVG(EXTRACT(DAY FROM "completedDate"-"startDate")) AS "Average Time in Days"
+FROM certificates AS a
+INNER JOIN courses AS b ON a.course_id = b.course_id
+GROUP BY b.course_id, b.title;
+
+
+-- report of fastest vs. slowest users completing a course
+DROP TABLE IF EXISTS tmp;
+SELECT a.user_id , a.course_id, "completedDate"-"startDate" AS "Time"
+INTO tmp
+FROM certificates AS a;
+
+WITH max_time as (
+    SELECT a.course_id, MAX("Time") AS "Time"
+    FROM tmp AS a
+    GROUP BY a.course_id
+),
+min_time as (
+    SELECT a.course_id, MIN("Time") AS "Time"
+    FROM tmp AS a
+    GROUP BY a.course_id
+)
+SELECT t.user_id, t.course_id, EXTRACT(DAY FROM t."Time") as "Time Taken in days"
+FROM tmp as t
+INNER JOIN max_time as ma ON t."Time" = ma."Time"
+UNION ALL
+SELECT t.user_id, t.course_id, EXTRACT(DAY FROM t."Time")
+FROM tmp as t
+INNER JOIN min_time as mi ON t."Time" = mi."Time";
+
+
+-- amount of certificates per customer
+SELECT user_id, COUNT(DISTINCT course_id) as "No. of courses done"
+FROM certificates
+GROUP BY user_id
+ORDER BY "No. of courses done" DESC

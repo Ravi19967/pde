@@ -1,0 +1,24 @@
+version: "3"
+services:
+  etl:
+    image: "python"
+    container_name: "etl_pull"
+    command: bash -c "pip install -r code/requirements.txt && python code/main.py"
+    volumes:
+      -  ~/PDE/src:/code
+    links:
+      - "db:database"
+  db:
+    image: "postgres:13"
+    container_name: "my_postgres"
+    environment:
+      POSTGRES_PASSWORD: "my_password"
+    expose:
+      - "5432"
+    ports:
+      - "5432:5432"
+    volumes:
+      - my_dbdata:/var/lib/postgresql/data
+volumes:
+  my_dbdata:
+  my_code:
